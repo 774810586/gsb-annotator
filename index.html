@@ -7,8 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown-light.css">
-    <!-- Base JS SDK (前端插件核心) -->
-    <script src="https://lf-cdn.larkoffice.com/obj/lark-base-open/js-sdk/latest/base-js-sdk.umd.js"></script>
     <style>
         :root {
             --primary: #4f6ef7;
@@ -37,12 +35,11 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Tahoma, 'PingFang SC', 'Microsoft Yahei', Arial, 'Hiragino Sans GB', sans-serif;
             background: var(--bg); color: var(--text); line-height: 1.6;
         }
-        /* Dark mode support for Bitable */
         body.dark-mode { --bg: #1a1a1a; --text: #e2e8f0; --text-secondary: #94a3b8; --border: #374151; --primary-light: #1e2a4a; }
         body.dark-mode .case-card, body.dark-mode .source-panel, body.dark-mode .field-mapping { background: #252525; }
-        body.dark-mode .gsb-btn, body.dark-mode .extra-btn { background: #2d2d2d; }
-        body.dark-mode .btn-outline, body.dark-mode .nav-btn { background: #2d2d2d; }
+        body.dark-mode .gsb-btn, body.dark-mode .extra-btn, body.dark-mode .btn-outline, body.dark-mode .nav-btn { background: #2d2d2d; }
         body.dark-mode .form-input, body.dark-mode select { background: #2d2d2d; color: var(--text); }
+        body.dark-mode .modal { background: #252525; }
 
         .header { background: linear-gradient(135deg, #4f6ef7 0%, #6366f1 100%); color: #fff; padding: 20px 16px 16px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(79,110,247,.3); }
         .header h1 { font-size: 17px; font-weight: 700; letter-spacing: .5px; }
@@ -52,15 +49,12 @@
         .stats-bar .stat-item span { font-weight: 700; color: var(--text); margin-left: 3px; }
         .sync-indicator { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
         .sync-indicator.connected { background: var(--sync-bg); color: var(--sync); }
-        .sync-indicator.disconnected { background: var(--bg); color: var(--text-secondary); }
         .sync-dot { width: 6px; height: 6px; border-radius: 50%; }
         .sync-dot.on { background: var(--sync); animation: pulse 2s infinite; }
-        .sync-dot.off { background: #cbd5e1; }
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
 
         .container { max-width: 100%; margin: 0 auto; padding: 16px 14px 60px; }
 
-        /* ===== Source Selection ===== */
         .source-section { margin: 0 auto; }
         .source-tabs { display: flex; gap: 0; background: var(--bg); border-radius: 10px 10px 0 0; border: 1px solid var(--border); border-bottom: none; overflow: hidden; }
         .source-tab { flex: 1; padding: 11px 12px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-secondary); border-right: 1px solid var(--border); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -71,7 +65,6 @@
         .source-panel { border: 1px solid var(--border); border-radius: 0 0 10px 10px; background: #fff; padding: 20px 16px; display: none; }
         .source-panel.active { display: block; }
 
-        /* Bitable form */
         .bitable-form { display: flex; flex-direction: column; gap: 14px; }
         .form-group { display: flex; flex-direction: column; gap: 4px; }
         .form-group label { font-size: 12px; font-weight: 600; color: var(--text); }
@@ -79,7 +72,6 @@
         .form-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; transition: border .15s; }
         .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,110,247,.1); }
 
-        /* Field Mapping */
         .field-mapping { border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--bg); }
         .field-mapping h4 { font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; color: var(--text); }
         .mapping-grid { display: flex; flex-direction: column; gap: 6px; }
@@ -87,7 +79,6 @@
         .mapping-item .label { min-width: 80px; font-weight: 600; color: var(--text-secondary); flex-shrink: 0; }
         .mapping-item select { flex: 1; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: #fff; cursor: pointer; }
         .mapping-item select:focus { outline: none; border-color: var(--primary); }
-
         .writeback-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 
         .btn-connect { width: 100%; padding: 10px; border-radius: 8px; background: var(--primary); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
@@ -101,7 +92,11 @@
         .connection-status.success { display: block; background: var(--good-bg); color: var(--good); }
         .connection-status.error { display: block; background: var(--bad-bg); color: var(--bad); }
 
-        /* File Upload */
+        .sdk-status { padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 12px; text-align: center; }
+        .sdk-status.loading { background: #fffbeb; color: #92400e; }
+        .sdk-status.ready { background: var(--good-bg); color: var(--good); }
+        .sdk-status.fail { background: var(--bad-bg); color: var(--bad); }
+
         .upload-box { border: 2px dashed var(--border); border-radius: 10px; padding: 30px 20px; text-align: center; transition: all .2s; cursor: pointer; }
         .upload-box:hover, .upload-box.dragover { border-color: var(--primary); background: var(--primary-light); }
         .upload-box svg { width: 36px; height: 36px; color: var(--primary); margin-bottom: 8px; }
@@ -109,7 +104,6 @@
         .upload-box p { font-size: 12px; color: var(--text-secondary); }
         .upload-box .note { margin-top: 10px; padding: 8px 12px; background: #fffbeb; border-radius: 6px; font-size: 11px; color: #92400e; text-align: left; }
 
-        /* ===== Toolbar ===== */
         .toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
         .toolbar-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -137,13 +131,11 @@
         .filter-btn { padding: 4px 10px; border-radius: 5px; border: none; font-size: 11px; font-weight: 500; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all .15s; white-space: nowrap; }
         .filter-btn.active { background: #fff; color: var(--text); box-shadow: var(--shadow); }
 
-        /* ===== Case Card ===== */
         .case-card { background: #fff; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 14px; overflow: hidden; border: 1px solid var(--border); }
         .case-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--bg); gap: 8px; }
         .case-meta { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
         .case-id { font-size: 11px; color: var(--text-secondary); word-break: break-all; }
         .case-query { font-size: 13px; font-weight: 600; color: var(--text); word-break: break-word; }
-
         .badge-group { display: flex; gap: 4px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
         .badge { padding: 2px 8px; border-radius: 16px; font-size: 10px; font-weight: 600; white-space: nowrap; }
         .badge-pending { background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border); }
@@ -177,7 +169,6 @@
         .md-content th { background: var(--bg); font-weight: 600; }
         .md-content img { max-width: 100%; border-radius: 6px; }
         .md-content a { color: var(--primary); text-decoration: none; }
-        .md-content a:hover { text-decoration: underline; }
 
         .annotation-bar { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 12px 14px; border-top: 1px solid var(--border); background: var(--bg); flex-wrap: wrap; }
         .gsb-group { display: flex; gap: 6px; }
@@ -190,9 +181,7 @@
         .gsb-btn.bad { border-color: transparent; }
         .gsb-btn.bad:hover, .gsb-btn.bad.selected { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
         .gsb-btn .key-hint { font-size: 9px; color: var(--text-secondary); margin-left: 3px; opacity: .6; }
-
         .divider { width: 1px; height: 24px; background: var(--border); }
-
         .extra-btn { padding: 7px 12px; border-radius: 7px; border: 2px solid transparent; background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-secondary); transition: all .2s; }
         .uncertain-btn:hover, .uncertain-btn.selected { background: var(--uncertain-bg); border-color: var(--uncertain); color: var(--uncertain); }
         .invalid-btn:hover, .invalid-btn.selected { background: var(--invalid-bg); border-color: var(--invalid); color: var(--invalid); }
@@ -209,20 +198,16 @@
 
         .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #6366f1); border-radius: 2px; transition: width .3s; }
-
         .empty-state { text-align: center; padding: 40px 16px; color: var(--text-secondary); font-size: 13px; }
-
         .toast { position: fixed; bottom: 16px; right: 16px; left: 16px; padding: 10px 16px; background: #1e293b; color: #fff; border-radius: 8px; font-size: 12px; font-weight: 500; z-index: 1000; opacity: 0; transform: translateY(8px); transition: all .3s; pointer-events: none; text-align: center; }
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.error { background: var(--bad); }
         .toast.success { background: var(--good); }
-
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-overlay.show { display: flex; }
         .modal { background: #fff; border-radius: 12px; padding: 20px; max-width: 380px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.15); }
         .modal h3 { font-size: 15px; margin-bottom: 12px; }
         .modal .btn-group { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
-
         .jump-input { width: 40px; text-align: center; border: 1px solid var(--border); border-radius: 5px; padding: 3px; font-size: 12px; font-weight: 600; }
         .jump-input:focus { outline: none; border-color: var(--primary); }
     </style>
@@ -246,15 +231,14 @@
         <span id="progressPct">0%</span>
     </div>
     <div class="stat-item" id="syncStatusItem" style="display:none">
-        <div class="sync-indicator" id="syncIndicator">
-            <div class="sync-dot" id="syncDot"></div>
-            <span id="syncStatusText">未连接</span>
+        <div class="sync-indicator connected" id="syncIndicator">
+            <div class="sync-dot on" id="syncDot"></div>
+            <span id="syncStatusText">已连接</span>
         </div>
     </div>
 </div>
 
 <div class="container">
-    <!-- ===== Source Selection ===== -->
     <div id="sourceSection" class="source-section">
         <div class="source-tabs">
             <div class="source-tab active" data-tab="bitable" onclick="switchSourceTab('bitable')">
@@ -267,30 +251,27 @@
             </div>
         </div>
 
-        <!-- Tab 1: Bitable (默认) -->
+        <!-- Tab 1: Bitable -->
         <div class="source-panel active" id="panel-bitable">
             <div class="bitable-form">
+                <div class="sdk-status loading" id="sdkStatus">⏳ 正在加载 Base JS SDK …</div>
                 <div id="btConnectArea">
                     <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
-                        自动读取当前打开的多维表数据，标注结果实时回写。无需 Token。
+                        自动读取当前多维表数据，标注结果实时回写。无需 Token，权限跟随当前用户。
                     </p>
-                    <button class="btn-connect" id="btnConnect" onclick="connectBitable()">连接当前数据表并获取字段</button>
+                    <button class="btn-connect" id="btnConnect" onclick="connectBitable()" disabled>连接当前数据表并获取字段</button>
                     <div class="connection-status" id="connectionStatus"></div>
                 </div>
-
                 <div id="fieldMappingSection" style="display:none">
                     <div class="field-mapping">
                         <h4>📖 读取字段映射</h4>
                         <div class="mapping-grid" id="readMappingGrid"></div>
-
                         <div class="writeback-section">
-                            <h4>📤 回写字段映射 <span style="font-weight:400;color:var(--text-secondary);font-size:10px">（字段不存在需先在表中创建）</span></h4>
+                            <h4>📤 回写字段映射 <span style="font-weight:400;color:var(--text-secondary);font-size:10px">（字段需先在表中创建）</span></h4>
                             <div class="mapping-grid" id="writeMappingGrid"></div>
                         </div>
                     </div>
-                    <button class="btn-connect" id="btnLoadData" onclick="loadBitableData()" style="margin-top:12px; background:#059669;">
-                        加载数据并开始标注
-                    </button>
+                    <button class="btn-connect" id="btnLoadData" onclick="loadBitableData()" style="margin-top:12px; background:#059669;">加载数据并开始标注</button>
                 </div>
             </div>
         </div>
@@ -307,7 +288,6 @@
         </div>
     </div>
 
-    <!-- ===== Main Annotation Content ===== -->
     <div id="mainContent" style="display:none">
         <div class="toolbar">
             <div class="toolbar-row">
@@ -320,9 +300,7 @@
                 </div>
                 <div class="nav-group">
                     <button class="nav-btn" id="prevBtn" title="← 上一条">‹</button>
-                    <div class="nav-info">
-                        <input type="text" class="jump-input" id="jumpInput" title="输入序号回车跳转"> / <span id="filteredTotal">0</span>
-                    </div>
+                    <div class="nav-info"><input type="text" class="jump-input" id="jumpInput" title="输入序号回车跳转"> / <span id="filteredTotal">0</span></div>
                     <button class="nav-btn" id="nextBtn" title="→ 下一条">›</button>
                 </div>
             </div>
@@ -331,23 +309,18 @@
                     <input type="checkbox" id="autoSyncCheckbox" checked> 自动回写
                 </label>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button class="btn btn-sync" id="btnSyncAll" style="display:none" onclick="syncAllToBitable()">
-                        ⟳ 批量同步
-                    </button>
+                    <button class="btn btn-sync" id="btnSyncAll" style="display:none" onclick="syncAllToBitable()">⟳ 批量同步</button>
                     <button class="btn btn-export" onclick="exportResults()">↓ 导出</button>
                     <button class="btn btn-reset" onclick="confirmReset()">重置</button>
                 </div>
             </div>
         </div>
         <div id="caseContainer"></div>
-        <div id="emptyState" class="empty-state" style="display:none">
-            <p>当前筛选条件下没有数据</p>
-        </div>
+        <div id="emptyState" class="empty-state" style="display:none"><p>当前筛选条件下没有数据</p></div>
     </div>
 </div>
 
 <div class="toast" id="toast"></div>
-
 <div class="modal-overlay" id="resetModal">
     <div class="modal">
         <h3>确认重置</h3>
@@ -359,48 +332,90 @@
     </div>
 </div>
 
+<!-- ========== 通过 ES Module 动态加载 Base JS SDK ========== -->
+<script type="module">
+    // 尝试多个 CDN 源加载 SDK
+    const CDN_URLS = [
+        'https://esm.sh/@lark-base-open/js-sdk@0.3.8',
+        'https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk/+esm',
+        'https://esm.sh/@lark-base-open/js-sdk'
+    ];
+
+    async function loadSDK() {
+        for (const url of CDN_URLS) {
+            try {
+                console.log('[GSB] Trying SDK from:', url);
+                const mod = await import(url);
+                if (mod && mod.bitable) {
+                    window.__bitable = mod.bitable;
+                    console.log('[GSB] ✅ SDK loaded from:', url);
+                    return true;
+                }
+            } catch (e) {
+                console.warn('[GSB] ❌ Failed from', url, e.message);
+            }
+        }
+        return false;
+    }
+
+    const loaded = await loadSDK();
+    const statusEl = document.getElementById('sdkStatus');
+    const btnConnect = document.getElementById('btnConnect');
+
+    if (loaded) {
+        statusEl.className = 'sdk-status ready';
+        statusEl.textContent = '✅ Base JS SDK 已就绪';
+        btnConnect.disabled = false;
+
+        // 初始化主题
+        try {
+            const theme = await window.__bitable.bridge.getTheme();
+            document.body.classList.toggle('dark-mode', theme === 'DARK');
+            window.__bitable.bridge.onThemeChange((ev) => {
+                document.body.classList.toggle('dark-mode', ev.data.theme === 'DARK');
+            });
+        } catch(e) { console.log('[GSB] Theme init skipped:', e.message); }
+    } else {
+        statusEl.className = 'sdk-status fail';
+        statusEl.innerHTML = '❌ SDK 加载失败。请确认此页面运行在<strong>多维表格插件</strong>环境中。<br>或切换到「上传 Excel」模式使用。';
+        btnConnect.disabled = true;
+    }
+</script>
+
 <script>
 // ======================== STATE ========================
 let allCases = [];
 let currentFilter = 'all';
 let currentIndex = 0;
-let dataSource = 'file'; // 'file' | 'bitable'
+let dataSource = 'file';
 
-// Bitable state (via JS SDK)
 const btState = {
-    connected: false,
-    table: null,        // JS SDK table object
-    fieldMetaList: [],  // [{id, name, type}]
-    readMapping: {},    // { queryId: fieldName, ... }
-    writeMapping: {},   // { conclusion: fieldName, ... }
+    connected: false, table: null, fieldMetaList: [],
+    readMapping: {}, writeMapping: {},
 };
 
-const bitable = window.bitable || (window.base && window.base.bitable) || null;
-
 const READ_FIELDS = [
-    { key: 'queryId',     label: 'QueryID',     required: true },
-    { key: 'query',       label: 'Query',        required: true },
-    { key: 'logId',       label: 'LogID',        required: false },
-    { key: 'baseResult',  label: 'BaseResult',   required: true },
-    { key: 'prismResult', label: 'PrismResult',  required: true }
+    { key: 'queryId', label: 'QueryID', required: true },
+    { key: 'query', label: 'Query', required: true },
+    { key: 'logId', label: 'LogID', required: false },
+    { key: 'baseResult', label: 'BaseResult', required: true },
+    { key: 'prismResult', label: 'PrismResult', required: true }
 ];
-
 const WRITE_FIELDS = [
-    { key: 'conclusion',       label: 'BaseVsPrism结论',  defaultNames: ['BaseVsPrism结论', 'Base vs Prism 结论', '结论'] },
-    { key: 'status',           label: '标注状态',          defaultNames: ['标注状态', '状态'] },
-    { key: 'blindChoice',      label: '盲评选择',          defaultNames: ['盲评选择', '盲评选择(AB维度)'] },
-    { key: 'uncertainFlag',    label: '不易判断',          defaultNames: ['不易判断', '是否不易判断'] },
-    { key: 'uncertainReason',  label: '不易判断原因',      defaultNames: ['不易判断原因'] },
-    { key: 'invalidFlag',     label: '不合适',            defaultNames: ['不合适', '是否不合适'] },
-    { key: 'invalidReason',   label: '不合适原因',        defaultNames: ['不合适原因'] }
+    { key: 'conclusion', label: 'BaseVsPrism结论', defaultNames: ['BaseVsPrism结论','Base vs Prism 结论','结论'] },
+    { key: 'status', label: '标注状态', defaultNames: ['标注状态','状态'] },
+    { key: 'blindChoice', label: '盲评选择', defaultNames: ['盲评选择'] },
+    { key: 'uncertainFlag', label: '不易判断', defaultNames: ['不易判断','是否不易判断'] },
+    { key: 'uncertainReason', label: '不易判断原因', defaultNames: ['不易判断原因'] },
+    { key: 'invalidFlag', label: '不合适', defaultNames: ['不合适','是否不合适'] },
+    { key: 'invalidReason', label: '不合适原因', defaultNames: ['不合适原因'] }
 ];
-
 const COLUMN_ALIASES = {
-    queryId:     ['QueryID', 'AE QueryID', 'AEQueryID', 'queryid'],
-    query:       ['Query', 'query', 'QUERY'],
-    logId:       ['LogID', 'logid', 'LogId'],
-    baseResult:  ['BaseResult', 'baseresult', 'Base Result'],
-    prismResult: ['PrismResult', 'prismresult', 'Prism Result']
+    queryId: ['QueryID','AE QueryID','AEQueryID','queryid'],
+    query: ['Query','query','QUERY'],
+    logId: ['LogID','logid','LogId'],
+    baseResult: ['BaseResult','baseresult','Base Result'],
+    prismResult: ['PrismResult','prismresult','Prism Result']
 };
 
 function findColumn(headers, aliases) {
@@ -408,19 +423,13 @@ function findColumn(headers, aliases) {
     for (const a of aliases) { const f = headers.find(h => h && h.trim().toLowerCase() === a.toLowerCase()); if (f) return f; }
     return null;
 }
-
-// ======================== THEME (Bitable dark mode) ========================
-async function initTheme() {
-    if (!bitable) return;
-    try {
-        const theme = await bitable.bridge.getTheme();
-        document.body.classList.toggle('dark-mode', theme === 'DARK');
-        bitable.bridge.onThemeChange((ev) => {
-            document.body.classList.toggle('dark-mode', ev.data.theme === 'DARK');
-        });
-    } catch(e) { /* not in bitable env */ }
+function createCase(idx, data) {
+    return { idx, queryId: data.queryId||'', query: data.query||'', logId: data.logId||'',
+        baseResult: data.baseResult||'', prismResult: data.prismResult||'',
+        recordId: data.recordId||null, swapped: Math.random()<0.5,
+        annotation: null, uncertain: false, uncertainReason: '',
+        invalid: false, invalidReason: '', synced: false, lastSyncTime: null };
 }
-initTheme();
 
 // ======================== SOURCE TAB ========================
 function switchSourceTab(tab) {
@@ -439,661 +448,289 @@ uploadBox.addEventListener('drop', e => { e.preventDefault(); uploadBox.classLis
 fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
 
 function handleFile(file) {
-    if (!/\.xlsx?$/i.test(file.name)) return showToast('请上传 .xlsx 或 .xls 文件', 'error');
-    const reader = new FileReader();
-    reader.onload = e => parseExcel(e.target.result);
-    reader.readAsArrayBuffer(file);
+    if (!/\.xlsx?$/i.test(file.name)) return showToast('请上传 .xlsx 或 .xls 文件','error');
+    const r = new FileReader();
+    r.onload = e => parseExcel(e.target.result);
+    r.readAsArrayBuffer(file);
 }
-
 function parseExcel(buffer) {
     try {
-        const wb = XLSX.read(buffer, { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-        if (!json.length) return showToast('Excel 文件为空', 'error');
-
-        const headers = Object.keys(json[0]);
-        const colMap = {};
-        const missing = [];
-        for (const [key, aliases] of Object.entries(COLUMN_ALIASES)) {
-            const found = findColumn(headers, aliases);
-            if (found) colMap[key] = found; else missing.push(aliases[0]);
-        }
-        if (missing.length) return showToast('缺少必需列: ' + missing.join(', '), 'error');
-
-        const maxRows = Math.min(json.length, 1000);
+        const wb = XLSX.read(buffer,{type:'array'}), ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws,{defval:''});
+        if (!json.length) return showToast('Excel 为空','error');
+        const headers = Object.keys(json[0]), colMap = {}, missing = [];
+        for (const [key,aliases] of Object.entries(COLUMN_ALIASES)) { const f = findColumn(headers,aliases); if (f) colMap[key]=f; else missing.push(aliases[0]); }
+        if (missing.length) return showToast('缺少列: '+missing.join(', '),'error');
+        const max = Math.min(json.length,1000);
         allCases = [];
-        for (let i = 0; i < maxRows; i++) {
-            const row = json[i];
-            allCases.push(createCase(i, {
-                queryId: String(row[colMap.queryId] || ''),
-                query: String(row[colMap.query] || ''),
-                logId: String(row[colMap.logId] || ''),
-                baseResult: String(row[colMap.baseResult] || ''),
-                prismResult: String(row[colMap.prismResult] || '')
-            }));
-        }
-        dataSource = 'file';
-        enterAnnotationMode();
-        showToast(`加载 ${allCases.length} 条用例`, 'success');
-    } catch (err) { showToast('解析失败: ' + err.message, 'error'); }
+        for (let i=0;i<max;i++) { const row=json[i]; allCases.push(createCase(i,{queryId:String(row[colMap.queryId]||''),query:String(row[colMap.query]||''),logId:String(row[colMap.logId]||''),baseResult:String(row[colMap.baseResult]||''),prismResult:String(row[colMap.prismResult]||'')})); }
+        dataSource='file'; enterAnnotationMode(); showToast(`加载 ${allCases.length} 条用例`,'success');
+    } catch(err) { showToast('解析失败: '+err.message,'error'); }
 }
 
-function createCase(idx, data) {
-    return {
-        idx, ...data,
-        recordId: data.recordId || null,
-        swapped: Math.random() < 0.5,
-        annotation: null, uncertain: false, uncertainReason: '',
-        invalid: false, invalidReason: '',
-        synced: false, lastSyncTime: null
-    };
-}
-
-// ======================== BITABLE JS SDK CONNECTION ========================
+// ======================== BITABLE JS SDK ========================
 async function connectBitable() {
     const btn = document.getElementById('btnConnect');
     const statusEl = document.getElementById('connectionStatus');
-    btn.disabled = true;
-    btn.classList.add('loading');
-    btn.textContent = '';
-    statusEl.className = 'connection-status';
-    statusEl.style.display = 'none';
+    btn.disabled = true; btn.classList.add('loading'); btn.textContent = '';
+    statusEl.className = 'connection-status'; statusEl.style.display = 'none';
 
     try {
-        if (!bitable) throw new Error('未检测到 Base JS SDK。请确保此页面运行在多维表格插件环境中。');
+        const bitable = window.__bitable;
+        if (!bitable) throw new Error('SDK 未加载。请确认页面运行在多维表格插件环境中。');
 
         const table = await bitable.base.getActiveTable();
         btState.table = table;
-
-        // 获取所有字段的 meta 信息
         const fieldMetaList = await table.getFieldMetaList();
         btState.fieldMetaList = fieldMetaList;
         btState.connected = true;
 
-        const tableName = await table.getName();
-        statusEl.className = 'connection-status success';
-        statusEl.textContent = `✅ 已连接「${tableName}」，共 ${fieldMetaList.length} 个字段`;
+        let tableName = '当前表';
+        try { tableName = await table.getName(); } catch(e) {}
 
+        statusEl.className = 'connection-status success';
+        statusEl.textContent = `✅ 已连接「${tableName}」，${fieldMetaList.length} 个字段`;
         buildFieldMapping(fieldMetaList);
         document.getElementById('fieldMappingSection').style.display = 'block';
-    } catch (err) {
+    } catch(err) {
         statusEl.className = 'connection-status error';
-        statusEl.textContent = `❌ ${err.message}`;
+        statusEl.textContent = '❌ ' + err.message;
         btState.connected = false;
     } finally {
-        btn.disabled = false;
-        btn.classList.remove('loading');
+        btn.disabled = false; btn.classList.remove('loading');
         btn.textContent = '连接当前数据表并获取字段';
     }
 }
 
-function buildFieldMapping(fieldMetaList) {
-    const fieldNames = fieldMetaList.map(f => f.name);
-
-    // Read mapping
-    const readGrid = document.getElementById('readMappingGrid');
-    readGrid.innerHTML = '';
+function buildFieldMapping(fml) {
+    const names = fml.map(f => f.name);
+    const readGrid = document.getElementById('readMappingGrid'); readGrid.innerHTML = '';
     for (const rf of READ_FIELDS) {
-        const guessed = guessFieldMatch(rf.key, fieldNames);
-        readGrid.innerHTML += `
-            <div class="mapping-item">
-                <span class="label">${rf.label}${rf.required ? ' *' : ''}</span>
-                <select id="readMap_${rf.key}" onchange="updateReadMapping()">
-                    <option value="">-- 不映射 --</option>
-                    ${fieldNames.map(fn => `<option value="${esc(fn)}" ${fn === guessed ? 'selected' : ''}>${esc(fn)}</option>`).join('')}
-                </select>
-            </div>`;
+        const g = guessMatch(COLUMN_ALIASES[rf.key]||[rf.key], names);
+        readGrid.innerHTML += `<div class="mapping-item"><span class="label">${rf.label}${rf.required?' *':''}</span><select id="readMap_${rf.key}" onchange="updateReadMapping()"><option value="">-- 不映射 --</option>${names.map(n=>`<option value="${esc(n)}" ${n===g?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`;
     }
     updateReadMapping();
-
-    // Write mapping
-    const writeGrid = document.getElementById('writeMappingGrid');
-    writeGrid.innerHTML = '';
+    const writeGrid = document.getElementById('writeMappingGrid'); writeGrid.innerHTML = '';
     for (const wf of WRITE_FIELDS) {
-        const guessed = guessWriteFieldMatch(wf.defaultNames, fieldNames);
-        writeGrid.innerHTML += `
-            <div class="mapping-item">
-                <span class="label">${wf.label}</span>
-                <select id="writeMap_${wf.key}" onchange="updateWriteMapping()">
-                    <option value="">-- 不回写 --</option>
-                    ${fieldNames.map(fn => `<option value="${esc(fn)}" ${fn === guessed ? 'selected' : ''}>${esc(fn)}</option>`).join('')}
-                </select>
-            </div>`;
+        const g = guessMatch(wf.defaultNames, names);
+        writeGrid.innerHTML += `<div class="mapping-item"><span class="label">${wf.label}</span><select id="writeMap_${wf.key}" onchange="updateWriteMapping()"><option value="">-- 不回写 --</option>${names.map(n=>`<option value="${esc(n)}" ${n===g?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`;
     }
     updateWriteMapping();
 }
-
-function guessFieldMatch(key, fieldNames) {
-    const aliases = COLUMN_ALIASES[key] || [key];
-    for (const a of aliases) {
-        const match = fieldNames.find(fn => fn.toLowerCase() === a.toLowerCase());
-        if (match) return match;
-    }
-    for (const a of aliases) {
-        const match = fieldNames.find(fn => fn.toLowerCase().includes(a.toLowerCase()));
-        if (match) return match;
-    }
+function guessMatch(aliases, names) {
+    for (const a of aliases) { const m = names.find(n => n === a); if (m) return m; }
+    for (const a of aliases) { const m = names.find(n => n.toLowerCase() === a.toLowerCase()); if (m) return m; }
+    for (const a of aliases) { const m = names.find(n => n.toLowerCase().includes(a.toLowerCase())); if (m) return m; }
     return '';
 }
+function updateReadMapping() { READ_FIELDS.forEach(rf => { const s=document.getElementById('readMap_'+rf.key); if(s) btState.readMapping[rf.key]=s.value; }); }
+function updateWriteMapping() { WRITE_FIELDS.forEach(wf => { const s=document.getElementById('writeMap_'+wf.key); if(s) btState.writeMapping[wf.key]=s.value; }); }
 
-function guessWriteFieldMatch(defaultNames, fieldNames) {
-    for (const dn of defaultNames) {
-        const exact = fieldNames.find(fn => fn === dn);
-        if (exact) return exact;
-    }
-    for (const dn of defaultNames) {
-        const match = fieldNames.find(fn => fn.toLowerCase().includes(dn.toLowerCase()) || dn.toLowerCase().includes(fn.toLowerCase()));
-        if (match) return match;
-    }
-    return '';
-}
-
-function updateReadMapping() {
-    READ_FIELDS.forEach(rf => {
-        const sel = document.getElementById('readMap_' + rf.key);
-        if (sel) btState.readMapping[rf.key] = sel.value;
-    });
-}
-function updateWriteMapping() {
-    WRITE_FIELDS.forEach(wf => {
-        const sel = document.getElementById('writeMap_' + wf.key);
-        if (sel) btState.writeMapping[wf.key] = sel.value;
-    });
+function extractTextValue(val) {
+    if (val===null||val===undefined) return '';
+    if (typeof val==='string') return val;
+    if (typeof val==='number'||typeof val==='boolean') return String(val);
+    if (Array.isArray(val)) return val.map(item => typeof item==='string'?item:(item&&item.text?item.text:JSON.stringify(item))).join('');
+    if (val&&val.text) return val.text;
+    return JSON.stringify(val);
 }
 
 async function loadBitableData() {
     const missing = READ_FIELDS.filter(rf => rf.required && !btState.readMapping[rf.key]);
-    if (missing.length) return showToast('请映射必需字段: ' + missing.map(f => f.label).join(', '), 'error');
+    if (missing.length) return showToast('请映射: '+missing.map(f=>f.label).join(', '),'error');
 
     const btn = document.getElementById('btnLoadData');
-    btn.disabled = true;
-    btn.classList.add('loading');
-    btn.textContent = '';
+    btn.disabled=true; btn.classList.add('loading'); btn.textContent='';
 
     try {
         const table = btState.table;
-        // 使用批量 getRecords 接口
-        const recordIdList = await table.getRecordIdList();
-        if (!recordIdList.length) return showToast('表中无数据', 'error');
-
-        // 解析字段名 -> 字段对象映射 (用于读取值)
-        const fieldNameToMeta = {};
-        btState.fieldMetaList.forEach(f => { fieldNameToMeta[f.name] = f; });
-
-        // 获取需要读取的字段对象
-        const readFieldObjs = {};
+        const nameMeta = {}; btState.fieldMetaList.forEach(f=>{nameMeta[f.name]=f;});
+        const readObjs = {};
         for (const rf of READ_FIELDS) {
-            const fname = btState.readMapping[rf.key];
-            if (fname && fieldNameToMeta[fname]) {
-                readFieldObjs[rf.key] = await table.getField(fieldNameToMeta[fname].id);
-            }
+            const fn = btState.readMapping[rf.key];
+            if (fn && nameMeta[fn]) readObjs[rf.key] = await table.getField(nameMeta[fn].id);
         }
 
-        // 批量读取 records (使用 getRecords 批量接口)
+        const recordIdList = await table.getRecordIdList();
+        if (!recordIdList.length) { showToast('表中无数据','error'); return; }
+
         allCases = [];
-        const batchSize = 500;
-        for (let i = 0; i < recordIdList.length; i += batchSize) {
-            const batchIds = recordIdList.slice(i, i + batchSize);
-            // 逐条读取字段值（JS SDK 的 getRecords 可用时批量获取更快）
-            for (const recId of batchIds) {
-                const rowData = {};
-                for (const rf of READ_FIELDS) {
-                    if (readFieldObjs[rf.key]) {
-                        try {
-                            const val = await readFieldObjs[rf.key].getValue(recId);
-                            rowData[rf.key] = extractTextValue(val);
-                        } catch { rowData[rf.key] = ''; }
-                    } else {
-                        rowData[rf.key] = '';
-                    }
-                }
-                rowData.recordId = recId;
-                allCases.push(createCase(allCases.length, rowData));
+        const total = recordIdList.length;
+        for (let i = 0; i < total; i++) {
+            const recId = recordIdList[i];
+            const row = { recordId: recId };
+            for (const rf of READ_FIELDS) {
+                if (readObjs[rf.key]) {
+                    try { row[rf.key] = extractTextValue(await readObjs[rf.key].getValue(recId)); }
+                    catch { row[rf.key] = ''; }
+                } else row[rf.key] = '';
             }
-            // 更新进度
-            if (recordIdList.length > batchSize) {
-                btn.textContent = `加载中... ${Math.min(i + batchSize, recordIdList.length)}/${recordIdList.length}`;
+            allCases.push(createCase(allCases.length, row));
+            if (i % 50 === 0) {
                 btn.classList.remove('loading');
+                btn.textContent = `加载中… ${i+1}/${total}`;
             }
         }
-
         dataSource = 'bitable';
         enterAnnotationMode();
-        showToast(`从多维表加载 ${allCases.length} 条数据`, 'success');
-    } catch (err) {
-        showToast('加载失败: ' + err.message, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove('loading');
-        btn.textContent = '加载数据并开始标注';
-    }
+        showToast(`从多维表加载 ${allCases.length} 条`,'success');
+    } catch(err) { showToast('加载失败: '+err.message,'error'); }
+    finally { btn.disabled=false; btn.classList.remove('loading'); btn.textContent='加载数据并开始标注'; }
 }
 
-// 从 JS SDK 返回的各种 cell value 中提取纯文本
-function extractTextValue(val) {
-    if (val === null || val === undefined) return '';
-    if (typeof val === 'string') return val;
-    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-    if (Array.isArray(val)) {
-        return val.map(item => {
-            if (typeof item === 'string') return item;
-            if (item && item.text) return item.text;
-            if (item && item.name) return item.name;
-            return JSON.stringify(item);
-        }).join('');
-    }
-    if (val && val.text) return val.text;
-    return JSON.stringify(val);
+// ======================== SYNC ========================
+function buildWBFields(c) {
+    const wm = btState.writeMapping, f = {};
+    const aL = c.swapped?'PrismResult':'BaseResult', bL = c.swapped?'BaseResult':'PrismResult';
+    let bvp = '';
+    if (c.annotation&&!c.uncertain&&!c.invalid) { const w=c.annotation==='good'?aL:c.annotation==='bad'?bL:'Same'; bvp=w==='BaseResult'?'Base更好':w==='PrismResult'?'Prism更好':'一样好'; }
+    const st = c.invalid?'不合适':c.uncertain?'不易判断':c.annotation?'已标注':'未标注';
+    const bc = c.annotation==='good'?'A更好':c.annotation==='bad'?'B更好':c.annotation==='same'?'一样好':'';
+    if(wm.conclusion) f[wm.conclusion]=bvp;
+    if(wm.status) f[wm.status]=st;
+    if(wm.blindChoice) f[wm.blindChoice]=bc;
+    if(wm.uncertainFlag) f[wm.uncertainFlag]=c.uncertain?'是':'否';
+    if(wm.uncertainReason) f[wm.uncertainReason]=c.uncertainReason||'';
+    if(wm.invalidFlag) f[wm.invalidFlag]=c.invalid?'是':'否';
+    if(wm.invalidReason) f[wm.invalidReason]=c.invalidReason||'';
+    return f;
 }
-
-// ======================== ENTER ANNOTATION MODE ========================
-function enterAnnotationMode() {
-    document.getElementById('sourceSection').style.display = 'none';
-    document.getElementById('mainContent').style.display = 'block';
-    document.getElementById('statsBar').style.display = 'flex';
-
-    const isBitable = dataSource === 'bitable' && btState.connected;
-    document.getElementById('syncStatusItem').style.display = isBitable ? 'inline-flex' : 'none';
-    document.getElementById('btnSyncAll').style.display = isBitable ? 'inline-flex' : 'none';
-    document.getElementById('autoSyncLabel').style.display = isBitable ? 'flex' : 'none';
-
-    if (isBitable) {
-        document.getElementById('syncDot').className = 'sync-dot on';
-        document.getElementById('syncIndicator').className = 'sync-indicator connected';
-        document.getElementById('syncStatusText').textContent = '已连接';
-    }
-
-    currentFilter = 'all';
-    currentIndex = 0;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
-    renderCurrent();
-    updateStats();
-}
-
-// ======================== SYNC TO BITABLE (JS SDK) ========================
-function buildWriteBackFields(c) {
-    const wm = btState.writeMapping;
-    const fields = {};
-
-    const aLabel = c.swapped ? 'PrismResult' : 'BaseResult';
-    const bLabel = c.swapped ? 'BaseResult' : 'PrismResult';
-
-    let baseVsPrism = '';
-    if (c.annotation && !c.uncertain && !c.invalid) {
-        let winner = c.annotation === 'good' ? aLabel : c.annotation === 'bad' ? bLabel : 'Same';
-        baseVsPrism = winner === 'BaseResult' ? 'Base更好' : winner === 'PrismResult' ? 'Prism更好' : '一样好';
-    }
-
-    let status = '未标注';
-    if (c.invalid) status = '不合适';
-    else if (c.uncertain) status = '不易判断';
-    else if (c.annotation) status = '已标注';
-
-    let blindChoice = '';
-    if (c.annotation === 'good') blindChoice = 'A更好';
-    else if (c.annotation === 'bad') blindChoice = 'B更好';
-    else if (c.annotation === 'same') blindChoice = '一样好';
-
-    if (wm.conclusion) fields[wm.conclusion] = baseVsPrism;
-    if (wm.status) fields[wm.status] = status;
-    if (wm.blindChoice) fields[wm.blindChoice] = blindChoice;
-    if (wm.uncertainFlag) fields[wm.uncertainFlag] = c.uncertain ? '是' : '否';
-    if (wm.uncertainReason) fields[wm.uncertainReason] = c.uncertainReason || '';
-    if (wm.invalidFlag) fields[wm.invalidFlag] = c.invalid ? '是' : '否';
-    if (wm.invalidReason) fields[wm.invalidReason] = c.invalidReason || '';
-
-    return fields;
-}
-
 async function syncSingleRecord(c) {
-    if (!btState.connected || !c.recordId || !btState.table) return;
-    const hasWriteField = Object.values(btState.writeMapping).some(v => v);
-    if (!hasWriteField) return;
-
-    const writeData = buildWriteBackFields(c);
-    const table = btState.table;
-    const fieldNameToMeta = {};
-    btState.fieldMetaList.forEach(f => { fieldNameToMeta[f.name] = f; });
-
-    for (const [fieldName, value] of Object.entries(writeData)) {
-        if (!fieldName) continue;
-        const meta = fieldNameToMeta[fieldName];
-        if (!meta) continue;
-        try {
-            const field = await table.getField(meta.id);
-            await field.setValue(c.recordId, value);
-        } catch (err) {
-            console.warn(`回写字段 [${fieldName}] 失败:`, err);
-        }
+    if (!btState.connected||!c.recordId||!btState.table) return;
+    if (!Object.values(btState.writeMapping).some(v=>v)) return;
+    const data = buildWBFields(c), table = btState.table;
+    const nameMeta = {}; btState.fieldMetaList.forEach(f=>{nameMeta[f.name]=f;});
+    for (const [fn,val] of Object.entries(data)) {
+        if (!fn||!nameMeta[fn]) continue;
+        try { const field = await table.getField(nameMeta[fn].id); await field.setValue(c.recordId, val); }
+        catch(e) { console.warn('[GSB] 回写失败:',fn,e); }
     }
-    c.synced = true;
-    c.lastSyncTime = new Date();
+    c.synced=true; c.lastSyncTime=new Date();
 }
-
 async function autoSyncIfEnabled(c) {
-    if (dataSource !== 'bitable' || !btState.connected) return;
-    if (!document.getElementById('autoSyncCheckbox').checked) {
-        c.synced = false;
-        return;
-    }
-    try {
-        await syncSingleRecord(c);
-    } catch (err) {
-        showToast('自动回写失败: ' + err.message, 'error');
-    }
+    if (dataSource!=='bitable'||!btState.connected) return;
+    if (!document.getElementById('autoSyncCheckbox').checked) { c.synced=false; return; }
+    try { await syncSingleRecord(c); } catch(e) { showToast('回写失败: '+e.message,'error'); }
     renderCurrent();
 }
-
 async function syncAllToBitable() {
-    if (!btState.connected) return showToast('未连接多维表', 'error');
-    const hasWriteField = Object.values(btState.writeMapping).some(v => v);
-    if (!hasWriteField) return showToast('未配置回写字段', 'error');
-
-    const toSync = allCases.filter(c => c.recordId && (c.annotation || c.uncertain || c.invalid) && !c.synced);
-    if (!toSync.length) return showToast('没有待同步数据');
-
-    const btn = document.getElementById('btnSyncAll');
-    btn.disabled = true;
-    let success = 0, failed = 0;
-
-    // 使用 setRecords 批量接口（如果 table 支持）
-    // 先尝试批量方式
-    try {
-        const table = btState.table;
-        const fieldNameToMeta = {};
-        btState.fieldMetaList.forEach(f => { fieldNameToMeta[f.name] = f; });
-
-        // 构建按字段分组的批量更新
-        const writeFieldNames = Object.values(btState.writeMapping).filter(v => v);
-        
-        for (const c of toSync) {
-            try {
-                await syncSingleRecord(c);
-                success++;
-            } catch {
-                failed++;
-            }
-            btn.textContent = `⟳ ${success}/${toSync.length}`;
-        }
-    } catch (err) {
-        showToast('批量同步出错: ' + err.message, 'error');
+    if (!btState.connected) return showToast('未连接','error');
+    if (!Object.values(btState.writeMapping).some(v=>v)) return showToast('未配置回写字段','error');
+    const toSync = allCases.filter(c=>c.recordId&&(c.annotation||c.uncertain||c.invalid)&&!c.synced);
+    if (!toSync.length) return showToast('无待同步数据');
+    const btn = document.getElementById('btnSyncAll'); btn.disabled=true;
+    let ok=0, fail=0;
+    for (const c of toSync) {
+        try { await syncSingleRecord(c); ok++; } catch { fail++; }
+        btn.textContent = `⟳ ${ok}/${toSync.length}`;
     }
-
-    btn.disabled = false;
-    btn.textContent = '⟳ 批量同步';
-
-    if (failed) showToast(`同步: ${success} 成功, ${failed} 失败`, 'error');
-    else showToast(`${success} 条记录同步成功`, 'success');
+    btn.disabled=false; btn.textContent='⟳ 批量同步';
+    if (fail) showToast(`${ok} 成功, ${fail} 失败`,'error');
+    else showToast(`${ok} 条同步成功`,'success');
     renderCurrent();
 }
 
-// ======================== FILTER & NAV ========================
+// ======================== MODE / FILTER / NAV ========================
+function enterAnnotationMode() {
+    document.getElementById('sourceSection').style.display='none';
+    document.getElementById('mainContent').style.display='block';
+    document.getElementById('statsBar').style.display='flex';
+    const isBT = dataSource==='bitable'&&btState.connected;
+    document.getElementById('syncStatusItem').style.display = isBT?'inline-flex':'none';
+    document.getElementById('btnSyncAll').style.display = isBT?'inline-flex':'none';
+    document.getElementById('autoSyncLabel').style.display = isBT?'flex':'none';
+    currentFilter='all'; currentIndex=0;
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));
+    renderCurrent(); updateStats();
+}
+
 function getFiltered() {
-    if (currentFilter === 'all') return allCases;
-    if (currentFilter === 'pending') return allCases.filter(c => !c.annotation && !c.uncertain && !c.invalid);
-    if (currentFilter === 'done') return allCases.filter(c => c.annotation && !c.uncertain && !c.invalid);
-    if (currentFilter === 'uncertain') return allCases.filter(c => c.uncertain);
-    if (currentFilter === 'invalid') return allCases.filter(c => c.invalid);
+    if(currentFilter==='all') return allCases;
+    if(currentFilter==='pending') return allCases.filter(c=>!c.annotation&&!c.uncertain&&!c.invalid);
+    if(currentFilter==='done') return allCases.filter(c=>c.annotation&&!c.uncertain&&!c.invalid);
+    if(currentFilter==='uncertain') return allCases.filter(c=>c.uncertain);
+    if(currentFilter==='invalid') return allCases.filter(c=>c.invalid);
     return allCases;
 }
-
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.dataset.filter;
-        currentIndex = 0;
-        renderCurrent();
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+        document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active'); currentFilter=btn.dataset.filter; currentIndex=0; renderCurrent();
     });
 });
-
-document.getElementById('prevBtn').addEventListener('click', () => { if (currentIndex > 0) { currentIndex--; renderCurrent(); } });
-document.getElementById('nextBtn').addEventListener('click', () => { const f = getFiltered(); if (currentIndex < f.length - 1) { currentIndex++; renderCurrent(); } });
-document.getElementById('jumpInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-        const val = parseInt(e.target.value), filtered = getFiltered();
-        if (val >= 1 && val <= filtered.length) { currentIndex = val - 1; renderCurrent(); }
-        else showToast('请输入 1 ~ ' + filtered.length);
-    }
+document.getElementById('prevBtn').addEventListener('click',()=>{ if(currentIndex>0){currentIndex--;renderCurrent();} });
+document.getElementById('nextBtn').addEventListener('click',()=>{ const f=getFiltered(); if(currentIndex<f.length-1){currentIndex++;renderCurrent();} });
+document.getElementById('jumpInput').addEventListener('keydown',e=>{
+    if(e.key==='Enter'){ const v=parseInt(e.target.value),f=getFiltered(); if(v>=1&&v<=f.length){currentIndex=v-1;renderCurrent();}else showToast('请输入 1~'+f.length); }
 });
 
 // ======================== RENDER ========================
 function renderCurrent() {
-    const filtered = getFiltered();
-    const container = document.getElementById('caseContainer');
-    const empty = document.getElementById('emptyState');
-    document.getElementById('filteredTotal').textContent = filtered.length;
+    const filtered=getFiltered(), container=document.getElementById('caseContainer'), empty=document.getElementById('emptyState');
+    document.getElementById('filteredTotal').textContent=filtered.length;
+    if(!filtered.length){ container.innerHTML=''; empty.style.display='block'; document.getElementById('jumpInput').value='0'; document.getElementById('prevBtn').disabled=true; document.getElementById('nextBtn').disabled=true; return; }
+    empty.style.display='none';
+    if(currentIndex>=filtered.length) currentIndex=filtered.length-1;
+    document.getElementById('jumpInput').value=currentIndex+1;
+    document.getElementById('prevBtn').disabled=currentIndex===0;
+    document.getElementById('nextBtn').disabled=currentIndex>=filtered.length-1;
 
-    if (!filtered.length) {
-        container.innerHTML = '';
-        empty.style.display = 'block';
-        document.getElementById('jumpInput').value = '0';
-        document.getElementById('prevBtn').disabled = true;
-        document.getElementById('nextBtn').disabled = true;
-        return;
-    }
-    empty.style.display = 'none';
-    if (currentIndex >= filtered.length) currentIndex = filtered.length - 1;
-
-    document.getElementById('jumpInput').value = currentIndex + 1;
-    document.getElementById('prevBtn').disabled = currentIndex === 0;
-    document.getElementById('nextBtn').disabled = currentIndex >= filtered.length - 1;
-
-    const c = filtered[currentIndex];
-    const resultA = c.swapped ? c.prismResult : c.baseResult;
-    const resultB = c.swapped ? c.baseResult : c.prismResult;
-
-    let statusBadge;
-    if (c.invalid) statusBadge = '<span class="badge badge-invalid">不合适</span>';
-    else if (c.uncertain) statusBadge = '<span class="badge badge-uncertain">不易判断</span>';
-    else if (c.annotation) statusBadge = '<span class="badge badge-done">已标注</span>';
-    else statusBadge = '<span class="badge badge-pending">待标注</span>';
-
-    let syncBadge = '';
-    if (dataSource === 'bitable' && btState.connected && c.recordId) {
-        if (c.synced) syncBadge = '<span class="badge badge-synced">✓ 已同步</span>';
-        else if (c.annotation || c.uncertain || c.invalid) syncBadge = '<span class="badge badge-sync-pending">⏳ 待同步</span>';
-    }
-
-    const gsbSel = v => c.annotation === v && !c.uncertain && !c.invalid ? 'selected' : '';
-
-    container.innerHTML = `
-        <div class="case-card">
-            <div class="case-header">
-                <div class="case-meta">
-                    <div class="case-id">QueryID: <strong>${esc(c.queryId)}</strong> | #${c.idx+1}</div>
-                    <div class="case-query">${esc(c.query)}</div>
-                </div>
-                <div class="badge-group">${syncBadge}${statusBadge}</div>
-            </div>
-            <div class="results-grid">
-                <div class="result-panel">
-                    <span class="result-label label-a">回答 A</span>
-                    <div class="md-content markdown-body">${renderMd(resultA)}</div>
-                </div>
-                <div class="result-panel">
-                    <span class="result-label label-b">回答 B</span>
-                    <div class="md-content markdown-body">${renderMd(resultB)}</div>
-                </div>
-            </div>
-            <div class="annotation-bar">
-                <div class="gsb-group">
-                    <button class="gsb-btn good ${gsbSel('good')}" onclick="annotate('good')" title="快捷键 1">👍 A好 <span class="key-hint">[1]</span></button>
-                    <button class="gsb-btn same ${gsbSel('same')}" onclick="annotate('same')" title="快捷键 2">🤝 一样 <span class="key-hint">[2]</span></button>
-                    <button class="gsb-btn bad ${gsbSel('bad')}" onclick="annotate('bad')" title="快捷键 3">👎 B好 <span class="key-hint">[3]</span></button>
-                </div>
-                <div class="divider"></div>
-                <button class="extra-btn uncertain-btn ${c.uncertain ? 'selected' : ''}" onclick="toggleUncertain()" title="快捷键 4">🤔 难判 <span class="key-hint">[4]</span></button>
-                <button class="extra-btn invalid-btn ${c.invalid ? 'selected' : ''}" onclick="toggleInvalid()" title="快捷键 5">🚫 不适 <span class="key-hint">[5]</span></button>
-            </div>
-            <div class="reason-box uncertain-reason ${c.uncertain ? 'show' : ''}" id="uncertainReasonBox">
-                <label>不易判断原因</label>
-                <textarea placeholder="输入原因..." oninput="saveUncertainReason(this.value)">${esc(c.uncertainReason)}</textarea>
-            </div>
-            <div class="reason-box invalid-reason ${c.invalid ? 'show' : ''}" id="invalidReasonBox">
-                <label>不合适原因</label>
-                <textarea placeholder="输入原因..." oninput="saveInvalidReason(this.value)">${esc(c.invalidReason)}</textarea>
-            </div>
-        </div>`;
+    const c=filtered[currentIndex];
+    const rA=c.swapped?c.prismResult:c.baseResult, rB=c.swapped?c.baseResult:c.prismResult;
+    let sBadge; if(c.invalid) sBadge='<span class="badge badge-invalid">不合适</span>'; else if(c.uncertain) sBadge='<span class="badge badge-uncertain">不易判断</span>'; else if(c.annotation) sBadge='<span class="badge badge-done">已标注</span>'; else sBadge='<span class="badge badge-pending">待标注</span>';
+    let syncB=''; if(dataSource==='bitable'&&btState.connected&&c.recordId){ if(c.synced) syncB='<span class="badge badge-synced">✓ 已同步</span>'; else if(c.annotation||c.uncertain||c.invalid) syncB='<span class="badge badge-sync-pending">⏳ 待同步</span>'; }
+    const gs=v=>c.annotation===v&&!c.uncertain&&!c.invalid?'selected':'';
+    container.innerHTML=`<div class="case-card"><div class="case-header"><div class="case-meta"><div class="case-id">QueryID: <strong>${esc(c.queryId)}</strong> | #${c.idx+1}</div><div class="case-query">${esc(c.query)}</div></div><div class="badge-group">${syncB}${sBadge}</div></div><div class="results-grid"><div class="result-panel"><span class="result-label label-a">回答 A</span><div class="md-content markdown-body">${renderMd(rA)}</div></div><div class="result-panel"><span class="result-label label-b">回答 B</span><div class="md-content markdown-body">${renderMd(rB)}</div></div></div><div class="annotation-bar"><div class="gsb-group"><button class="gsb-btn good ${gs('good')}" onclick="annotate('good')">👍 A好 <span class="key-hint">[1]</span></button><button class="gsb-btn same ${gs('same')}" onclick="annotate('same')">🤝 一样 <span class="key-hint">[2]</span></button><button class="gsb-btn bad ${gs('bad')}" onclick="annotate('bad')">👎 B好 <span class="key-hint">[3]</span></button></div><div class="divider"></div><button class="extra-btn uncertain-btn ${c.uncertain?'selected':''}" onclick="toggleUncertain()">🤔 难判 <span class="key-hint">[4]</span></button><button class="extra-btn invalid-btn ${c.invalid?'selected':''}" onclick="toggleInvalid()">🚫 不适 <span class="key-hint">[5]</span></button></div><div class="reason-box uncertain-reason ${c.uncertain?'show':''}" id="uncertainReasonBox"><label>不易判断原因</label><textarea placeholder="输入原因…" oninput="saveUncertainReason(this.value)">${esc(c.uncertainReason)}</textarea></div><div class="reason-box invalid-reason ${c.invalid?'show':''}" id="invalidReasonBox"><label>不合适原因</label><textarea placeholder="输入原因…" oninput="saveInvalidReason(this.value)">${esc(c.invalidReason)}</textarea></div></div>`;
 }
 
 // ======================== ANNOTATION ========================
 function annotate(val) {
-    const filtered = getFiltered();
-    if (!filtered.length) return;
-    const c = filtered[currentIndex];
-    if (c.annotation === val) { c.annotation = null; c.synced = false; }
-    else { c.annotation = val; c.uncertain = false; c.uncertainReason = ''; c.invalid = false; c.invalidReason = ''; c.synced = false; }
-    renderCurrent(); updateStats();
-    autoSyncIfEnabled(c);
-    if (c.annotation) setTimeout(() => { const f = getFiltered(); if (currentIndex < f.length - 1) { currentIndex++; renderCurrent(); } }, 280);
+    const f=getFiltered(); if(!f.length) return; const c=f[currentIndex];
+    if(c.annotation===val){c.annotation=null;c.synced=false;} else {c.annotation=val;c.uncertain=false;c.uncertainReason='';c.invalid=false;c.invalidReason='';c.synced=false;}
+    renderCurrent(); updateStats(); autoSyncIfEnabled(c);
+    if(c.annotation) setTimeout(()=>{const fl=getFiltered();if(currentIndex<fl.length-1){currentIndex++;renderCurrent();}},280);
 }
+function toggleUncertain() { const f=getFiltered();if(!f.length)return;const c=f[currentIndex]; c.uncertain=!c.uncertain; if(c.uncertain){c.annotation=null;c.invalid=false;c.invalidReason='';}else{c.uncertainReason='';} c.synced=false; renderCurrent();updateStats();autoSyncIfEnabled(c); }
+function toggleInvalid() { const f=getFiltered();if(!f.length)return;const c=f[currentIndex]; c.invalid=!c.invalid; if(c.invalid){c.annotation=null;c.uncertain=false;c.uncertainReason='';}else{c.invalidReason='';} c.synced=false; renderCurrent();updateStats();autoSyncIfEnabled(c); }
+function saveUncertainReason(v) { const f=getFiltered();if(f.length){f[currentIndex].uncertainReason=v;f[currentIndex].synced=false;} }
+function saveInvalidReason(v) { const f=getFiltered();if(f.length){f[currentIndex].invalidReason=v;f[currentIndex].synced=false;} }
 
-function toggleUncertain() {
-    const filtered = getFiltered();
-    if (!filtered.length) return;
-    const c = filtered[currentIndex];
-    c.uncertain = !c.uncertain;
-    if (c.uncertain) { c.annotation = null; c.invalid = false; c.invalidReason = ''; }
-    else { c.uncertainReason = ''; }
-    c.synced = false;
-    renderCurrent(); updateStats();
-    autoSyncIfEnabled(c);
-}
+let reasonTimer=null;
+document.addEventListener('input',e=>{if(e.target.closest('.reason-box')){clearTimeout(reasonTimer);reasonTimer=setTimeout(()=>{const f=getFiltered();if(f.length&&dataSource==='bitable'&&btState.connected)autoSyncIfEnabled(f[currentIndex]);},1500);}});
 
-function toggleInvalid() {
-    const filtered = getFiltered();
-    if (!filtered.length) return;
-    const c = filtered[currentIndex];
-    c.invalid = !c.invalid;
-    if (c.invalid) { c.annotation = null; c.uncertain = false; c.uncertainReason = ''; }
-    else { c.invalidReason = ''; }
-    c.synced = false;
-    renderCurrent(); updateStats();
-    autoSyncIfEnabled(c);
-}
-
-function saveUncertainReason(v) { const f = getFiltered(); if (f.length) { f[currentIndex].uncertainReason = v; f[currentIndex].synced = false; } }
-function saveInvalidReason(v) { const f = getFiltered(); if (f.length) { f[currentIndex].invalidReason = v; f[currentIndex].synced = false; } }
-
-// Debounced sync for reason text
-let reasonSyncTimer = null;
-document.addEventListener('input', e => {
-    if (e.target.closest('.reason-box')) {
-        clearTimeout(reasonSyncTimer);
-        reasonSyncTimer = setTimeout(() => {
-            const filtered = getFiltered();
-            if (filtered.length && dataSource === 'bitable' && btState.connected) {
-                autoSyncIfEnabled(filtered[currentIndex]);
-            }
-        }, 1500);
-    }
-});
-
-// ======================== STATS ========================
 function updateStats() {
-    const total = allCases.length;
-    const done = allCases.filter(c => c.annotation && !c.uncertain && !c.invalid).length;
-    const uncertain = allCases.filter(c => c.uncertain).length;
-    const invalid = allCases.filter(c => c.invalid).length;
-    document.getElementById('totalCount').textContent = total;
-    document.getElementById('doneCount').textContent = done;
-    document.getElementById('uncertainCount').textContent = uncertain;
-    document.getElementById('invalidCount').textContent = invalid;
-    const pct = total ? Math.round((done + uncertain + invalid) / total * 100) : 0;
-    document.getElementById('progressFill').style.width = pct + '%';
-    document.getElementById('progressPct').textContent = pct + '%';
+    const t=allCases.length, d=allCases.filter(c=>c.annotation&&!c.uncertain&&!c.invalid).length;
+    const u=allCases.filter(c=>c.uncertain).length, iv=allCases.filter(c=>c.invalid).length;
+    document.getElementById('totalCount').textContent=t; document.getElementById('doneCount').textContent=d;
+    document.getElementById('uncertainCount').textContent=u; document.getElementById('invalidCount').textContent=iv;
+    const p=t?Math.round((d+u+iv)/t*100):0;
+    document.getElementById('progressFill').style.width=p+'%'; document.getElementById('progressPct').textContent=p+'%';
 }
 
 // ======================== EXPORT ========================
 function exportResults() {
-    if (!allCases.length) return showToast('暂无数据');
-    const rows = allCases.map(c => {
-        const aLabel = c.swapped ? 'PrismResult' : 'BaseResult';
-        const bLabel = c.swapped ? 'BaseResult' : 'PrismResult';
-        let winner = c.annotation === 'good' ? aLabel : c.annotation === 'bad' ? bLabel : c.annotation === 'same' ? 'Same' : '';
-        let baseVsPrism = '';
-        if (c.annotation) { baseVsPrism = winner === 'BaseResult' ? 'Base更好' : winner === 'PrismResult' ? 'Prism更好' : '一样好'; }
-        let status = c.invalid ? '不合适' : c.uncertain ? '不易判断' : c.annotation ? '已标注' : '未标注';
-        return {
-            'QueryID': c.queryId, 'Query': c.query, 'LogID': c.logId,
-            'BaseResult': c.baseResult, 'PrismResult': c.prismResult,
-            '盲评A对应': aLabel, '盲评B对应': bLabel,
-            '盲评选择': c.annotation === 'good' ? 'A更好' : c.annotation === 'bad' ? 'B更好' : c.annotation === 'same' ? '一样好' : '',
-            'BaseVsPrism结论': baseVsPrism,
-            '不易判断': c.uncertain ? '是' : '否', '不易判断原因': c.uncertainReason,
-            '不合适': c.invalid ? '是' : '否', '不合适原因': c.invalidReason,
-            '标注状态': status
-        };
-    });
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.max(k.length * 2, 14) }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '盲评结果');
-
-    // Summary
-    const total = allCases.length, done = allCases.filter(c => c.annotation && !c.uncertain && !c.invalid).length;
-    const uncertain = allCases.filter(c => c.uncertain).length, invalid = allCases.filter(c => c.invalid).length;
-    const baseWin = allCases.filter(c => { if (!c.annotation||c.uncertain||c.invalid) return false; return (c.annotation==='good'&&!c.swapped)||(c.annotation==='bad'&&c.swapped); }).length;
-    const prismWin = allCases.filter(c => { if (!c.annotation||c.uncertain||c.invalid) return false; return (c.annotation==='good'&&c.swapped)||(c.annotation==='bad'&&!c.swapped); }).length;
-    const sameCount = allCases.filter(c => c.annotation==='same'&&!c.uncertain&&!c.invalid).length;
-    const summary = [
-        { '指标': '总用例数', '数值': total }, { '指标': '已标注', '数值': done },
-        { '指标': '不易判断', '数值': uncertain }, { '指标': '不合适', '数值': invalid },
-        { '指标': '未标注', '数值': total-done-uncertain-invalid }, { '指标': '', '数值': '' },
-        { '指标': 'Base更好', '数值': baseWin }, { '指标': 'Prism更好', '数值': prismWin },
-        { '指标': '一样好', '数值': sameCount },
-        { '指标': 'Base胜率', '数值': done ? (baseWin/done*100).toFixed(1)+'%' : '-' },
-        { '指标': 'Prism胜率', '数值': done ? (prismWin/done*100).toFixed(1)+'%' : '-' },
-    ];
-    const ws2 = XLSX.utils.json_to_sheet(summary);
-    XLSX.utils.book_append_sheet(wb, ws2, '统计');
-    XLSX.writeFile(wb, `盲评结果_${new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')}.xlsx`);
-    showToast('导出成功', 'success');
+    if(!allCases.length) return showToast('暂无数据');
+    const rows=allCases.map(c=>{const aL=c.swapped?'PrismResult':'BaseResult',bL=c.swapped?'BaseResult':'PrismResult';let w=c.annotation==='good'?aL:c.annotation==='bad'?bL:c.annotation==='same'?'Same':'';let bvp='';if(c.annotation){bvp=w==='BaseResult'?'Base更好':w==='PrismResult'?'Prism更好':'一样好';}let st=c.invalid?'不合适':c.uncertain?'不易判断':c.annotation?'已标注':'未标注';return{'QueryID':c.queryId,'Query':c.query,'LogID':c.logId,'BaseResult':c.baseResult,'PrismResult':c.prismResult,'盲评A对应':aL,'盲评B对应':bL,'盲评选择':c.annotation==='good'?'A更好':c.annotation==='bad'?'B更好':c.annotation==='same'?'一样好':'','BaseVsPrism结论':bvp,'不易判断':c.uncertain?'是':'否','不易判断原因':c.uncertainReason,'不合适':c.invalid?'是':'否','不合适原因':c.invalidReason,'标注状态':st};});
+    const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.max(k.length*2,14)}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'盲评结果');
+    const t=allCases.length,d=allCases.filter(c=>c.annotation&&!c.uncertain&&!c.invalid).length,u=allCases.filter(c=>c.uncertain).length,iv=allCases.filter(c=>c.invalid).length;
+    const bW=allCases.filter(c=>{if(!c.annotation||c.uncertain||c.invalid)return false;return(c.annotation==='good'&&!c.swapped)||(c.annotation==='bad'&&c.swapped);}).length;
+    const pW=allCases.filter(c=>{if(!c.annotation||c.uncertain||c.invalid)return false;return(c.annotation==='good'&&c.swapped)||(c.annotation==='bad'&&!c.swapped);}).length;
+    const sC=allCases.filter(c=>c.annotation==='same'&&!c.uncertain&&!c.invalid).length;
+    const sm=[{'指标':'总用例','数值':t},{'指标':'已标注','数值':d},{'指标':'不易判断','数值':u},{'指标':'不合适','数值':iv},{'指标':'未标注','数值':t-d-u-iv},{'指标':'','数值':''},{'指标':'Base更好','数值':bW},{'指标':'Prism更好','数值':pW},{'指标':'一样好','数值':sC},{'指标':'Base胜率','数值':d?(bW/d*100).toFixed(1)+'%':'-'},{'指标':'Prism胜率','数值':d?(pW/d*100).toFixed(1)+'%':'-'}];
+    const ws2=XLSX.utils.json_to_sheet(sm);XLSX.utils.book_append_sheet(wb,ws2,'统计');
+    XLSX.writeFile(wb,`盲评结果_${new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')}.xlsx`);showToast('导出成功','success');
 }
 
 // ======================== KEYBOARD ========================
-document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-    if (document.getElementById('mainContent').style.display === 'none') return;
-    switch (e.key) {
-        case '1': annotate('good'); break;
-        case '2': annotate('same'); break;
-        case '3': annotate('bad'); break;
-        case '4': toggleUncertain(); break;
-        case '5': toggleInvalid(); break;
-        case 'ArrowLeft': document.getElementById('prevBtn').click(); break;
-        case 'ArrowRight': document.getElementById('nextBtn').click(); break;
-    }
-});
+document.addEventListener('keydown',e=>{if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')return;if(document.getElementById('mainContent').style.display==='none')return;switch(e.key){case'1':annotate('good');break;case'2':annotate('same');break;case'3':annotate('bad');break;case'4':toggleUncertain();break;case'5':toggleInvalid();break;case'ArrowLeft':document.getElementById('prevBtn').click();break;case'ArrowRight':document.getElementById('nextBtn').click();break;}});
 
-// ======================== UTILITIES ========================
-function renderMd(text) {
-    if (!text || !text.trim()) return '<p style="color:var(--text-secondary);font-style:italic;">（无内容）</p>';
-    try { return marked.parse(text); } catch { return '<pre>' + esc(text) + '</pre>'; }
-}
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function showToast(msg, type) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show' + (type ? ' ' + type : '');
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.className = 'toast', 3000);
-}
-function confirmReset() { document.getElementById('resetModal').classList.add('show'); }
-function closeModal() { document.getElementById('resetModal').classList.remove('show'); }
-function doReset() {
-    closeModal(); allCases = []; dataSource = 'file';
-    btState.connected = false; btState.table = null; btState.fieldMetaList = [];
-    document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('statsBar').style.display = 'none';
-    document.getElementById('sourceSection').style.display = 'block';
-    document.getElementById('fieldMappingSection').style.display = 'none';
-    document.getElementById('connectionStatus').className = 'connection-status';
-    document.getElementById('connectionStatus').style.display = 'none';
-    fileInput.value = '';
-}
+// ======================== UTILS ========================
+function renderMd(t){if(!t||!t.trim())return'<p style="color:var(--text-secondary);font-style:italic;">（无内容）</p>';try{return marked.parse(t);}catch{return'<pre>'+esc(t)+'</pre>';}}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');clearTimeout(t._timer);t._timer=setTimeout(()=>t.className='toast',3000);}
+function confirmReset(){document.getElementById('resetModal').classList.add('show');}
+function closeModal(){document.getElementById('resetModal').classList.remove('show');}
+function doReset(){closeModal();allCases=[];dataSource='file';btState.connected=false;btState.table=null;btState.fieldMetaList=[];document.getElementById('mainContent').style.display='none';document.getElementById('statsBar').style.display='none';document.getElementById('sourceSection').style.display='block';document.getElementById('fieldMappingSection').style.display='none';document.getElementById('connectionStatus').className='connection-status';document.getElementById('connectionStatus').style.display='none';fileInput.value='';}
 </script>
 </body>
 </html>
